@@ -1,4 +1,4 @@
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Matplotlib Rubik's cube simulator
 # Written by Jake Vanderplas
 # Adapted from cube code written by David Hogg
@@ -43,9 +43,10 @@ After any rotation, this can be used to quickly restore the cube to
 canonical position.
 """
 
+
 class Cube:
     """Magic Cube Representation"""
-    # define some attribues
+    # define some attributes
     default_plastic_color = 'black'
     default_face_colors = ["w", "#ffcf00",
                            "#00008f", "#009f0f",
@@ -56,12 +57,12 @@ class Cube:
                           [-1, -1, 1],
                           [-1, 1, 1],
                           [1, 1, 1]], dtype=float)
-    stickerwidth = 0.9
-    stickermargin = 0.5 * (1. - stickerwidth)
-    stickerthickness = 0.001
-    (d1, d2, d3) = (1 - stickermargin,
-                    1 - 2 * stickermargin,
-                    1 + stickerthickness)
+    sticker_width = 0.9
+    sticker_margin = 0.5 * (1. - sticker_width)
+    sticker_thickness = 0.001
+    (d1, d2, d3) = (1 - sticker_margin,
+                    1 - 2 * sticker_margin,
+                    1 + sticker_thickness)
     base_sticker = np.array([[d1, d2, d3], [d2, d1, d3],
                              [-d2, d1, d3], [-d1, d2, d3],
                              [-d1, -d2, d3], [-d2, -d1, d3],
@@ -69,19 +70,20 @@ class Cube:
                              [d1, d2, d3]], dtype=float)
 
     base_face_centroid = np.array([[0, 0, 1]])
-    base_sticker_centroid = np.array([[0, 0, 1 + stickerthickness]])
+    base_sticker_centroid = np.array([[0, 0, 1 + sticker_thickness]])
 
     # Define rotation angles and axes for the six sides of the cube
     x, y, z = np.eye(3)
-    rots = [Quaternion.from_v_theta(np.eye(3)[0], theta)
-    for theta in (np.pi / 2, -np.pi / 2)]
-    rots += [Quaternion.from_v_theta(np.eye(3)[1], theta)
-    for theta in (np.pi / 2, -np.pi / 2, np.pi, 2 * np.pi)]
+    rots = [Quaternion.from_v_theta(np.eye(3)[0], theta) for theta in (np.pi / 2, -np.pi / 2)]
+    rots += [Quaternion.from_v_theta(np.eye(3)[1], theta) for theta in (np.pi / 2, -np.pi / 2, np.pi, 2 * np.pi)]
 
     # define face movements
-    facesdict = dict(F=z, B=-z,
-                     R=x, L=-x,
-                     U=y, D=-y)
+    faces_dict = dict(F=z,
+                      B=-z,
+                      R=x,
+                      L=-x,
+                      U=y,
+                      D=-y)
 
     def __init__(self, N=3, plastic_color=None, face_colors=None):
         self.N = N
@@ -120,14 +122,10 @@ class Cube:
 
         for i in range(6):
             M = self.rots[i].as_rotation_matrix()
-            faces_t = np.dot(factor * self.base_face
-                             + translations, M.T)
-            stickers_t = np.dot(factor * self.base_sticker
-                                + translations, M.T)
-            face_centroids_t = np.dot(self.base_face_centroid
-                                      + translations, M.T)
-            sticker_centroids_t = np.dot(self.base_sticker_centroid
-                                         + translations, M.T)
+            faces_t = np.dot(factor * self.base_face + translations, M.T)
+            stickers_t = np.dot(factor * self.base_sticker + translations, M.T)
+            face_centroids_t = np.dot(self.base_face_centroid + translations, M.T)
+            sticker_centroids_t = np.dot(self.base_sticker_centroid + translations, M.T)
             colors_i = i + np.zeros(face_centroids_t.shape[0], dtype=int)
 
             # append face ID to the face centroids for lex-sorting
@@ -178,21 +176,18 @@ class Cube:
                 self._move_list[-1] = (f, ntot, layer)
         else:
             self._move_list.append((f, n, layer))
-        
-        v = self.facesdict[f]
+
+        v = self.faces_dict[f]
         r = Quaternion.from_v_theta(v, n * np.pi / 2)
         M = r.as_rotation_matrix()
 
         proj = np.dot(self._face_centroids[:, :3], v)
-        cubie_width = 2. / self.N
-        flag = ((proj > 0.9 - (layer + 1) * cubie_width) &
-                (proj < 1.1 - layer * cubie_width))
+        cubie_width = 2.0 / self.N
+        flag = ((proj > 0.9 - (layer + 1) * cubie_width) & (proj < 1.1 - layer * cubie_width))
 
-        for x in [self._stickers, self._sticker_centroids,
-                  self._faces]:
+        for x in [self._stickers, self._sticker_centroids, self._faces]:
             x[flag] = np.dot(x[flag], M.T)
-        self._face_centroids[flag, :3] = np.dot(self._face_centroids[flag, :3],
-                                                M.T)
+        self._face_centroids[flag, :3] = np.dot(self._face_centroids[flag, :3], M.T)
 
     def draw_interactive(self):
         fig = plt.figure(figsize=(5, 5))
@@ -214,8 +209,7 @@ class InteractiveCube(plt.Axes):
             self.cube = Cube(cube)
 
         self._view = view
-        self._start_rot = Quaternion.from_v_theta((1, -1, 0),
-                                                  -np.pi / 6)
+        self._start_rot = Quaternion.from_v_theta((1, -1, 0), -np.pi / 6)
 
         if fig is None:
             fig = plt.gcf()
@@ -256,23 +250,18 @@ class InteractiveCube(plt.Axes):
         self._shift = False  # shift key pressed
         self._digit_flags = np.zeros(10, dtype=bool)  # digits 0-9 pressed
 
-        self._current_rot = self._start_rot  #current rotation state
+        self._current_rot = self._start_rot  # current rotation state
         self._face_polys = None
         self._sticker_polys = None
 
         self._draw_cube()
 
         # connect some GUI events
-        self.figure.canvas.mpl_connect('button_press_event',
-                                       self._mouse_press)
-        self.figure.canvas.mpl_connect('button_release_event',
-                                       self._mouse_release)
-        self.figure.canvas.mpl_connect('motion_notify_event',
-                                       self._mouse_motion)
-        self.figure.canvas.mpl_connect('key_press_event',
-                                       self._key_press)
-        self.figure.canvas.mpl_connect('key_release_event',
-                                       self._key_release)
+        self.figure.canvas.mpl_connect('button_press_event', self._mouse_press)
+        self.figure.canvas.mpl_connect('button_release_event', self._mouse_release)
+        self.figure.canvas.mpl_connect('motion_notify_event', self._mouse_motion)
+        self.figure.canvas.mpl_connect('key_press_event', self._key_press)
+        self.figure.canvas.mpl_connect('key_release_event', self._key_release)
 
         self._initialize_widgets()
 
@@ -312,10 +301,8 @@ class InteractiveCube(plt.Axes):
             self._sticker_polys = []
 
             for i in range(len(colors)):
-                fp = plt.Polygon(faces[i], facecolor=plastic_color,
-                                 zorder=face_zorders[i])
-                sp = plt.Polygon(stickers[i], facecolor=colors[i],
-                                 zorder=sticker_zorders[i])
+                fp = plt.Polygon(faces[i], facecolor=plastic_color, zorder=face_zorders[i])
+                sp = plt.Polygon(stickers[i], facecolor=colors[i], zorder=sticker_zorders[i])
 
                 self._face_polys.append(fp)
                 self._sticker_polys.append(sp)
@@ -340,8 +327,7 @@ class InteractiveCube(plt.Axes):
     def rotate_face(self, face, turns=1, layer=0, steps=5):
         if not np.allclose(turns, 0):
             for i in range(steps):
-                self.cube.rotate_face(face, turns * 1. / steps,
-                                      layer=layer)
+                self.cube.rotate_face(face, turns * 1. / steps, layer=layer)
                 self._draw_cube()
 
     def _reset_view(self, *args):
@@ -367,21 +353,17 @@ class InteractiveCube(plt.Axes):
                 ax_LR = self._ax_LR_alt
             else:
                 ax_LR = self._ax_LR
-            self.rotate(Quaternion.from_v_theta(ax_LR,
-                                                5 * self._step_LR))
+            self.rotate(Quaternion.from_v_theta(ax_LR, 5 * self._step_LR))
         elif event.key == 'left':
             if self._shift:
                 ax_LR = self._ax_LR_alt
             else:
                 ax_LR = self._ax_LR
-            self.rotate(Quaternion.from_v_theta(ax_LR,
-                                                -5 * self._step_LR))
+            self.rotate(Quaternion.from_v_theta(ax_LR, -5 * self._step_LR))
         elif event.key == 'up':
-            self.rotate(Quaternion.from_v_theta(self._ax_UD,
-                                                5 * self._step_UD))
+            self.rotate(Quaternion.from_v_theta(self._ax_UD, 5 * self._step_UD))
         elif event.key == 'down':
-            self.rotate(Quaternion.from_v_theta(self._ax_UD,
-                                                -5 * self._step_UD))
+            self.rotate(Quaternion.from_v_theta(self._ax_UD, -5 * self._step_UD))
         elif event.key.upper() in 'LRUDBF':
             if self._shift:
                 direction = -1
@@ -393,7 +375,7 @@ class InteractiveCube(plt.Axes):
                     self.rotate_face(event.key.upper(), direction, layer=d)
             else:
                 self.rotate_face(event.key.upper(), direction)
-                
+
         self._draw_cube()
 
     def _key_release(self, event):
@@ -431,10 +413,8 @@ class InteractiveCube(plt.Axes):
                     ax_LR = self._ax_LR_alt
                 else:
                     ax_LR = self._ax_LR
-                rot1 = Quaternion.from_v_theta(self._ax_UD,
-                                               self._step_UD * dy)
-                rot2 = Quaternion.from_v_theta(ax_LR,
-                                               self._step_LR * dx)
+                rot1 = Quaternion.from_v_theta(self._ax_UD, self._step_UD * dy)
+                rot2 = Quaternion.from_v_theta(ax_LR, self._step_LR * dx)
                 self.rotate(rot1 * rot2)
 
                 self._draw_cube()
@@ -448,24 +428,26 @@ class InteractiveCube(plt.Axes):
 
                 self.figure.canvas.draw()
 
+
 if __name__ == '__main__':
     import sys
     try:
         N = int(sys.argv[1])
     except:
+        # default to N = 3
         N = 3
 
     c = Cube(N)
 
     # do a 3-corner swap
-    #c.rotate_face('R')
-    #c.rotate_face('D')
-    #c.rotate_face('R', -1)
-    #c.rotate_face('U', -1)
-    #c.rotate_face('R')
-    #c.rotate_face('D', -1)
-    #c.rotate_face('R', -1)
-    #c.rotate_face('U')
+    # c.rotate_face('R')
+    # c.rotate_face('D')
+    # c.rotate_face('R', -1)
+    # c.rotate_face('U', -1)
+    # c.rotate_face('R')
+    # c.rotate_face('D', -1)
+    # c.rotate_face('R', -1)
+    # c.rotate_face('U')
 
     c.draw_interactive()
 

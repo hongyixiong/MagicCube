@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Quaternion:
     """Quaternion Rotation:
 
@@ -140,7 +141,7 @@ def project_points(points, q, view, vertical=[0, 1, 0]):
 
     xdir /= np.sqrt(np.dot(xdir, xdir))
 
-    # get the unit vector corresponing to vertical
+    # get the unit vector corresponding to vertical
     ydir = np.cross(view, xdir)
     ydir /= np.sqrt(np.dot(ydir, ydir))
 
@@ -157,7 +158,7 @@ def project_points(points, q, view, vertical=[0, 1, 0]):
     dpoint_view = np.dot(dpoint, view).reshape(dpoint.shape[:-1] + (1,))
     dproj = -dpoint * v2 / dpoint_view
 
-    trans =  list(range(1, dproj.ndim)) + [0]
+    trans = list(range(1, dproj.ndim)) + [0]
     return np.array([np.dot(dproj, xdir),
                      np.dot(dproj, ydir),
                      -np.dot(dpoint, zdir)]).transpose(trans)
